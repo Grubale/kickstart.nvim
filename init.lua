@@ -106,6 +106,13 @@ require('lazy').setup({
   },
 
   {
+    'bluz71/vim-nightfly-colors',
+    config = function()
+      vim.cmd [[colorscheme nightfly]]
+    end
+  },
+
+  {
     -- Autocompletion
     'hrsh7th/nvim-cmp',
     dependencies = {
@@ -144,29 +151,6 @@ require('lazy').setup({
   },
 
   {
-    -- Theme inspired by Atom
-    'navarasu/onedark.nvim',
-    priority = 1000,
-    config = function()
-      vim.cmd.colorscheme 'onedark'
-    end,
-  },
-
-  {
-    -- Set lualine as statusline
-    'nvim-lualine/lualine.nvim',
-    -- See `:help lualine.txt`
-    opts = {
-      options = {
-        icons_enabled = false,
-        theme = 'onedark',
-        component_separators = '|',
-        section_separators = '',
-      },
-    },
-  },
-
-  {
     -- Add indentation guides even on blank lines
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
@@ -179,7 +163,6 @@ require('lazy').setup({
 
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim', opts = {} },
-
   -- Fuzzy Finder (files, lsp, etc)
   {
     'nvim-telescope/telescope.nvim',
@@ -209,8 +192,22 @@ require('lazy').setup({
     },
     build = ':TSUpdate',
   },
-
 }, {})
+
+-- Set up neotree bindings
+require('which-key').register({
+  e = { '<cmd>Neotree toggle<cr>', 'Toggle NeoTree' },
+  o = {
+    function ()
+      if vim.bo.filetype == "neo-tree" then
+        vim.cmd.wincmd "p"
+      else
+        vim.cmd.Neotree "focus"
+      end
+    end,
+    'Toggle Explorer Focus',
+  },
+}, { prefix = '<leader>' })
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
