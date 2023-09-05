@@ -11,21 +11,27 @@ return {
   init = function () vim.g.neo_tree_remove_legacy_commands = true end,
   opts = function ()
     return {
+      -- Set up neotree bindings
+      require('which-key').register({
+        e = { '<cmd>Neotree toggle<cr>', 'Toggle NeoTree' },
+      }, { prefix = '<leader>' }),
       auto_clean_after_session_restore = true,
+      popup_border_style = "rounded",
+      enable_git_status = true,
       close_if_last_window = true,
-      sources = { 'filesystem', 'buffers' },
+      sources = { 'filesystem' },
       source_selector = {
         winbar = true,
         content_layout = "center",
         sources = {
           { source = "filesystem", display_name = " File" },
-          { source = "buffers", display_name = "󰈙 Bufs" },
         },
       },
       default_component_configs = {
         indent = {
           indent_size = 2,
           padding = 0,
+          highlight = "NeoTreeIndentMarker",
         },
         icon = {
           folder_closed = '',
@@ -117,17 +123,20 @@ return {
         end,
       },
       window = {
-        width = 50,
+        position = "float",
         mappings = {
           ["<space>"] = false, -- disable space until we figure out which-key disabling
           ["[b"] = "prev_source",
           ["]b"] = "next_source",
+          ["<"] = "prev_source",
+          [">"] = "next_source",
           F = "find_in_dir",
-          O = "system_open",
+          S = "open_split",
+          s = "open_vsplit",
+          P = "toggle_preview",
           Y = "copy_selector",
           h = "parent_or_close",
           l = "child_or_open",
-          o = "open",
         },
         fuzzy_finder_mappings = { -- define keymaps for filter popup window in fuzzy_finder_mode
           ["<C-j>"] = "move_cursor_down",
@@ -144,7 +153,7 @@ return {
           },
         },
         follow_current_file = { enabled = true },
-        hijack_netrw_behavior = "open_current",
+        hijack_netrw_behavior = "open_default",
         use_libuv_file_watcher = true,
       },
       event_handlers = {
