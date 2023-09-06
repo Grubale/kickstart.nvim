@@ -7,15 +7,12 @@ return {
   opts = {
     auto_clean_after_session_restore = true,
     close_if_last_window = true,
-    sources = { "filesystem", "buffers", "git_status" },
+    sources = { "filesystem" },
     source_selector = {
       winbar = true,
       content_layout = "center",
       sources = {
         { source = "filesystem", display_name = get_icon("FolderClosed", 1, true) .. "File" },
-        { source = "buffers", display_name = get_icon("DefaultFile", 1, true) .. "Bufs" },
-        { source = "git_status", display_name = get_icon("Git", 1, true) .. "Git" },
-        { source = "diagnostics", display_name = get_icon("Diagnostic", 1, true) .. "Diagnostic" },
       },
     },
     default_component_configs = {
@@ -101,6 +98,7 @@ return {
       end,
     },
     window = {
+      position = "float",
       width = 30,
       mappings = {
         ["<space>"] = false, -- disable space until we figure out which-key disabling
