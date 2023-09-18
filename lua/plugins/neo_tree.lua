@@ -8,12 +8,22 @@ return {
     'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
   },
   cmd = "Neotree",
-  init = function () vim.g.neo_tree_remove_legacy_commands = true end,
-  opts = function ()
+  init = function() vim.g.neo_tree_remove_legacy_commands = true end,
+  opts = function()
     return {
       -- Set up neotree bindings
       require('which-key').register({
         e = { '<cmd>Neotree toggle<cr>', 'Toggle NeoTree' },
+        o = {
+          function()
+            if vim.bo.filetype == "neo-tree" then
+              vim.cmd.wincmd "p"
+            else
+              vim.cmd.Neotree "focus"
+            end
+          end,
+          'Toggle Explorer Focus',
+        },
       }, { prefix = '<leader>' }),
       auto_clean_after_session_restore = true,
       popup_border_style = "rounded",
@@ -123,13 +133,10 @@ return {
         end,
       },
       window = {
-        position = "float",
+        position = "right",
+        width = 40,
         mappings = {
           ["<space>"] = false, -- disable space until we figure out which-key disabling
-          ["[b"] = "prev_source",
-          ["]b"] = "next_source",
-          ["<"] = "prev_source",
-          [">"] = "next_source",
           F = "find_in_dir",
           S = "open_split",
           s = "open_vsplit",

@@ -105,45 +105,8 @@ require('lazy').setup({
     },
   },
 
-  {
-    'catppuccin/nvim',
-    name = 'catppuccin',
-    priority = 1000,
-    config = function()
-      vim.cmd.colorscheme 'catppuccin-macchiato'
-    end,
-  },
-
-  {
-    "chrisgrieser/nvim-various-textobjs",
-    event = "VeryLazy",
-    opts = {
-      useDefaultKeymaps = true,
-    },
-  },
-
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
-  {
-    -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      -- See `:help gitsigns.txt`
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-      on_attach = function(bufnr)
-        vim.keymap.set('n', '<leader>gp', require('gitsigns').prev_hunk,
-          { buffer = bufnr, desc = '[G]o to [P]revious Hunk' })
-        vim.keymap.set('n', '<leader>gn', require('gitsigns').next_hunk, { buffer = bufnr, desc = '[G]o to [N]ext Hunk' })
-        vim.keymap.set('n', '<leader>ph', require('gitsigns').preview_hunk, { buffer = bufnr, desc = '[P]review [H]unk' })
-      end,
-    },
-  },
 
   {
     -- Add indentation guides even on blank lines
@@ -221,16 +184,6 @@ pcall(require('telescope').load_extension, 'fzf')
 -- Set up neotree bindings
 require('which-key').register({
   e = { '<cmd>Neotree toggle<cr>', 'Toggle NeoTree' },
-  o = {
-    function()
-      if vim.bo.filetype == "neo-tree" then
-        vim.cmd.wincmd "p"
-      else
-        vim.cmd.Neotree "focus"
-      end
-    end,
-    'Toggle Explorer Focus',
-  },
 }, { prefix = '<leader>' })
 
 -- See `:help telescope.builtin`
