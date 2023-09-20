@@ -24,14 +24,14 @@ return {
   dependencies = {
     'f-person/git-blame.nvim',
   },
-  opts = function (_, opts)
+  opts = function(_, opts)
     local gitblame = require 'gitblame'
 
     opts.options = {
       icons_enabled = true,
       theme = 'auto',
-      component_separators = { left = ' ', right = ' '},
-      section_separators = { left = '', right = ''},
+      component_separators = { left = ' ', right = ' ' },
+      section_separators = { left = '', right = '' },
       always_divide_middle = true,
       disabled_filetypes = {
         statusline = { 'neo-tree' },
@@ -39,18 +39,18 @@ return {
     }
 
     opts.sections = {
-      lualine_a = {'mode'},
-      lualine_b = {'diff', 'diagnostics'},
+      lualine_a = { 'mode' },
+      lualine_b = { 'diff', 'diagnostics' },
       lualine_c = {},
       lualine_x = {},
-      lualine_y = {'progress'},
-      lualine_z = {'location'},
+      lualine_y = { 'progress' },
+      lualine_z = { 'location' },
     }
 
     opts.tabline = {
-      lualine_a = {'branch'},
+      lualine_a = { 'branch' },
       lualine_b = { get_lsps },
-      lualine_c = {'filename'},
+      lualine_c = { 'filename' },
       lualine_x = {
         {
           gitblame.get_current_blame_text,
@@ -59,7 +59,7 @@ return {
         'fileformat',
         'filetype',
       },
-      lualine_y = {},
+      lualine_y = {}
     }
 
     return opts

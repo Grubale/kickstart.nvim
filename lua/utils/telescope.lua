@@ -9,6 +9,111 @@ local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")
 
+local jump_to_location = vim.lsp.util.jump_to_location
+
+local mapping_actions = {
+  ['<C-x>'] = actions.file_split,
+  ['<C-v>'] = actions.file_vsplit,
+  ['<C-t>'] = actions.file_tab,
+}
+
+local function get_correct_result(result1, result2)
+  return type(result1) == 'table' and result1 or result2
+end
+
+local function jump_fn(prompt_bufnr, action, offset_encoding)
+  return function()
+    local selection = action_state.get_selected_entry()
+
+    if not selection then
+      return
+    end
+
+    if action then
+      action(prompt_bufnr)
+    else
+      actions.close(prompt_bufnr)
+    end
+
+    local pos = {
+      line = selection.lnum - 1,
+      character = selection.col,
+    }
+
+    jump_to_location({
+      uri = vim.uri_from_fname(selection.filename),
+      range = {
+        start = pos,
+        ['end'] = pos,
+      },
+    }, offset_encoding)
+  end
+end
+
+local function attach_location_mappings(offset_encoding)
+  return function(prompt_bufnr, map)
+    local modes = { 'i', 'n' }
+    local keys = { '<CR>', '<C-x>', '<C-v', '<C-t>' }
+
+    for _, mode in pairs(modes) do
+      for _, key in pairs(keys) do
+        local action = mapping_actions[key]
+        map(mode, key, jump_fn(prompt_bufnr, action, offset_encoding))
+      end
+    end
+
+    return true
+  end
+end
+
+local function find(prompt_title, items, find_opts, offset_encoding)
+  local opts = find_opts.opts or {}
+
+  local entry_maker = find_opts.entry_maker or make_entry.gen_from_quickfix(opts)
+  local attach_mappings = find_opts.attach_mappings or attach_location_mappings(offset_encoding)
+  local previewer = nil
+
+  if not find_opts.hide_preview then
+    previewer = conf.qflist_previewer(opts)
+  end
+
+  pickers.new(opts, {
+    prompt_title = prompt_title,
+    finder = finders.new_table({
+      results = items,
+      entry_maker = entry_maker,
+    }),
+    previewer = previewer,
+    sorter = conf.generic_sorter(opts),
+    attach_mappings = attach_mappings,
+  }):find()
+end
+
+function M.location_handler(prompt_title)
+  return function(_, result, context, _)
+    local res = get_correct_result(result, context)
+    local client = vim.lsp.get_client_by_id(context.client_id)
+
+    if not res or vim.tbl_isempty(res) then
+      print('No references found')
+      return
+    end
+
+    if not vim.tbl_islist(res) then
+      jump_to_location(res, client.offset_encoding)
+      return
+    end
+
+    if #res == 1 then
+      jump_to_location(res[1], client.offset_encoding)
+      return
+    end
+
+    local items = vim.lsp.util.locations_to_items(res, client.offset_encoding)
+    find(prompt_title, items, { opts = {} }, client.offset_encoding)
+  end
+end
+
 local function getPreviewer(opts)
   if opts.show_preview then
     return conf.file_previewer(opts)
@@ -32,7 +137,7 @@ local function close(prompt_bufnr)
 end
 
 local function getDirFindCommand()
-  return { 'fd', '--type', 'd', '--color', 'never', '--exclude', 'node_modules', '--exclude', '.git'}
+  return { 'fd', '--type', 'd', '--color', 'never', '--exclude', 'node_modules', '--exclude', '.git' }
 end
 
 local function getExtFindCommand()
@@ -42,11 +147,9 @@ end
 function M.buffers()
   require('telescope.builtin').buffers({
     ignore_current_buffer = true,
-    attach_mappings = function (_, map)
-      map({'n', 'i'}, '<C-x>', function ()
-        local selection = action_state.get_selected_entry()
-
-        vim.api.nvim_buf_delete(selection.bufnr, { force = true })
+    attach_mappings = function(prompt_bufnr, map)
+      map({ 'n', 'i' }, '<C-b>', function()
+        actions.delete_buffer(prompt_bufnr)
       end)
 
       return true
@@ -80,7 +183,8 @@ function M.ext_picker(opts, fn)
     end
   end
 
-  local additional_options = { '|', 'gawk', "'match($0, /(\\.)([^\\.\\/]*)$/, arr) {print arr[2]}'", '|', 'sort', '|', 'uniq' }
+  local additional_options = { '|', 'gawk', "'match($0, /(\\.)([^\\.\\/]*)$/, arr) {print arr[2]}'", '|', 'sort', '|',
+    'uniq' }
 
   for _, option in pairs(additional_options) do
     find_command = find_command .. ' ' .. option
@@ -88,59 +192,60 @@ function M.ext_picker(opts, fn)
 
   vim.fn.jobstart(find_command, {
     stdout_buffered = true,
-    on_stdout = function (_, data)
+    on_stdout = function(_, data)
       if data then
-        pickers.new(opts, vim.tbl_extend('force', require('telescope.themes').get_dropdown { previewer = false, winblend = 10 }, {
-          prompt_title = 'Select a Filetype',
-          finder = finders.new_table({ results = data, entry_maker = make_entry.gen_from_file(opts) }),
-          sorter = conf.file_sorter(opts),
-          attach_mappings = function (prompt_bufnr)
-            actions.close:replace(function ()
-              close(prompt_bufnr)
+        pickers.new(opts,
+          vim.tbl_extend('force', require('telescope.themes').get_dropdown { previewer = false, winblend = 10 }, {
+            prompt_title = 'Select a Filetype',
+            finder = finders.new_table({ results = data, entry_maker = make_entry.gen_from_file(opts) }),
+            sorter = conf.file_sorter(opts),
+            attach_mappings = function(prompt_bufnr)
+              actions.close:replace(function()
+                close(prompt_bufnr)
 
-              fn(opts)
-            end)
+                fn(opts)
+              end)
 
-            action_set.select:replace(function ()
-              local current_picker = action_state.get_current_picker(prompt_bufnr)
-              local additional_args = {}
-              local selections = current_picker:get_multi_selection()
+              action_set.select:replace(function()
+                local current_picker = action_state.get_current_picker(prompt_bufnr)
+                local additional_args = {}
+                local selections = current_picker:get_multi_selection()
 
-              if vim.tbl_isempty(selections) then
-                if action_state.get_selected_entry().value == 'scss' then
-                  additional_args[#additional_args + 1] = '--type=sass'
-                elseif action_state.get_selected_entry().value == 'yml' then
-                  additional_args[#additional_args + 1] = '--type=yaml'
-                elseif action_state.get_selected_entry().value ~= '' then
-                  additional_args[#additional_args + 1] = '--type=' .. action_state.get_selected_entry().value
-                end
-              else
-                for _, selection in ipairs(selections) do
-                  if selection.value == 'scss' then
-                    additional_args[#additional_args + 1] = '--type=css'
-                  elseif selection.value == 'yml' then
+                if vim.tbl_isempty(selections) then
+                  if action_state.get_selected_entry().value == 'scss' then
+                    additional_args[#additional_args + 1] = '--type=sass'
+                  elseif action_state.get_selected_entry().value == 'yml' then
                     additional_args[#additional_args + 1] = '--type=yaml'
-                  else
-                    additional_args[#additional_args + 1] = '--type=' .. selection.value
+                  elseif action_state.get_selected_entry().value ~= '' then
+                    additional_args[#additional_args + 1] = '--type=' .. action_state.get_selected_entry().value
+                  end
+                else
+                  for _, selection in ipairs(selections) do
+                    if selection.value == 'scss' then
+                      additional_args[#additional_args + 1] = '--type=css'
+                    elseif selection.value == 'yml' then
+                      additional_args[#additional_args + 1] = '--type=yaml'
+                    else
+                      additional_args[#additional_args + 1] = '--type=' .. selection.value
+                    end
                   end
                 end
-              end
 
-              close(prompt_bufnr)
+                close(prompt_bufnr)
 
-              if type(opts.additional_args) == 'function' then
-                opts.additional_args = opts.additional_args(additional_args)
-              else
-                opts.additional_args = function (args)
-                  return vim.list_extend(args, additional_args)
+                if type(opts.additional_args) == 'function' then
+                  opts.additional_args = opts.additional_args(additional_args)
+                else
+                  opts.additional_args = function(args)
+                    return vim.list_extend(args, additional_args)
+                  end
                 end
-              end
 
-              fn(opts)
-            end)
-            return true
-          end
-        })):find()
+                fn(opts)
+              end)
+              return true
+            end
+          })):find()
       else
         vim.notify('No files found', vim.log.levels.ERROR)
       end
@@ -173,15 +278,15 @@ function M.dir_picker(opts, fn, live_grep)
 
   vim.fn.jobstart(find_command, {
     stdout_buffered = true,
-    on_stdout = function (_, data)
+    on_stdout = function(_, data)
       if data then
         pickers.new(opts, {
           prompt_title = 'Select a Directory',
           finder = finders.new_table({ results = data, entry_maker = make_entry.gen_from_file(opts) }),
           previewer = getPreviewer(opts),
           sorter = conf.file_sorter(opts),
-          attach_mappings = function (prompt_bufnr)
-            actions.close:replace(function ()
+          attach_mappings = function(prompt_bufnr)
+            actions.close:replace(function()
               close(prompt_bufnr)
 
               if live_grep then
@@ -191,7 +296,7 @@ function M.dir_picker(opts, fn, live_grep)
               end
             end)
 
-            action_set.select:replace(function ()
+            action_set.select:replace(function()
               local current_picker = action_state.get_current_picker(prompt_bufnr)
               local dirs = {}
               local selections = current_picker:get_multi_selection()
