@@ -5,26 +5,13 @@ return {
   branch = "main", -- HACK: force neo-tree to checkout `main` for initial v3 migration since default branch has changed
   dependencies = {
     'MunifTanjim/nui.nvim',
+    'folke/which-key.nvim',
     'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
   },
   cmd = "Neotree",
   init = function() vim.g.neo_tree_remove_legacy_commands = true end,
   opts = function()
     return {
-      -- Set up neotree bindings
-      require('which-key').register({
-        e = { '<cmd>Neotree toggle<cr>', 'Toggle NeoTree' },
-        o = {
-          function()
-            if vim.bo.filetype == "neo-tree" then
-              vim.cmd.wincmd "p"
-            else
-              vim.cmd.Neotree "focus"
-            end
-          end,
-          'Toggle Explorer Focus',
-        },
-      }, { prefix = '<leader>' }),
       auto_clean_after_session_restore = true,
       popup_border_style = "rounded",
       enable_git_status = true,

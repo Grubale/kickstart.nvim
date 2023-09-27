@@ -117,11 +117,24 @@ return {
       ['textDocument/references'] = require('utils.telescope').location_handler('LSP References'),
     }
 
+
     for req, handler in pairs(handlers) do
       vim.lsp.handlers[req] = handler
     end
 
+    local actions = require('telescope.actions')
+
     opts.defaults = {
+      mappings = {
+        i = {
+          ['<Tab>'] = actions.move_selection_next,
+          ['<S-Tab>'] = actions.move_selection_previous,
+        },
+        n = {
+          ['<Tab>'] = actions.move_selection_next,
+          ['<S-Tab>'] = actions.move_selection_previous,
+        },
+      },
       prompt_prefix = string.format('%s ', ' '),
       selection_caret = string.format('%s ', '❯'),
       path_display = { 'truncate' },
