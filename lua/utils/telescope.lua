@@ -151,7 +151,6 @@ function M.buffers()
       map({ 'n', 'i' }, '<C-b>', function()
         actions.delete_buffer(prompt_bufnr)
       end)
-
       return true
     end
   })

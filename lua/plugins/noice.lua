@@ -6,6 +6,8 @@ return {
   dependencies = {
     'folke/which-key.nvim',
     'MunifTanjim/nui.nvim',
+    'rcarriga/nvim-notify',
+    'nvim-telescope/telescope.nvim',
   },
   opts = function(_, opts)
     vim.keymap.set({ "n", "i", "s" }, "<c-f>", function()
@@ -35,12 +37,37 @@ return {
         },
       },
       presets = {
+        bottom_search = false,
         command_palette = true,
         long_message_to_split = true,
         inc_rename = true,
         lsp_doc_border = true,
       },
+      messages = {
+        enabled = true,
+        view = 'mini',
+        view_error = 'mini',         -- view for errors
+        view_warn = 'mini',          -- view for warnings
+        view_history = "messages",   -- view for :messages
+        view_search = "virtualtext", -- view for search count messages. Set to `false` to disable
+      },
+      notify = {
+        enable = true,
+        view = 'mini',
+      },
       views = {
+        notify = {
+          position = {
+            col = '50%',
+            row = '50%',
+          },
+        },
+        mini = {
+          position = {
+            row = -1,
+            col = 0,
+          },
+        },
         cmdline_popup = {
           filter_options = {},
           position = {
@@ -55,6 +82,11 @@ return {
               FloatBorder = 'FloatBorder',
             },
           },
+        },
+      },
+      commands = {
+        history = {
+          view = 'popup',
         },
       },
     })
