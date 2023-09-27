@@ -17,6 +17,10 @@ local function get_lsps()
   return output
 end
 
+local function maximize_status()
+  return vim.t.maximized and '  Maximized ' or ''
+end
+
 return {
   -- Set lualine as statusline
   'nvim-lualine/lualine.nvim',
@@ -41,7 +45,7 @@ return {
     opts.sections = {
       lualine_a = { 'mode' },
       lualine_b = { 'diff', 'diagnostics' },
-      lualine_c = {},
+      lualine_c = { maximize_status },
       lualine_x = {},
       lualine_y = { 'progress' },
       lualine_z = { 'location' },
