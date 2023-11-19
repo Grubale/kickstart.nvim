@@ -120,7 +120,7 @@ return {
         end,
       },
       window = {
-        position = "right",
+        position = "float",
         width = 40,
         mappings = {
           ["<space>"] = false, -- disable space until we figure out which-key disabling
